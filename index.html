@@ -4,6 +4,8 @@
 <title>Garments AI Doctor</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
 body{
 font-family:Arial;
@@ -12,7 +14,7 @@ padding:20px;
 }
 
 .container{
-max-width:700px;
+max-width:750px;
 margin:auto;
 background:white;
 padding:20px;
@@ -24,23 +26,22 @@ input,select{
 width:100%;
 padding:10px;
 margin:5px 0;
-border:1px solid #ccc;
-border-radius:5px;
 }
 
 button{
 background:#0066ff;
 color:white;
-padding:12px;
+padding:10px;
 border:none;
 border-radius:5px;
+margin-top:5px;
 cursor:pointer;
 }
 
 .result{
 margin-top:20px;
-padding:15px;
 background:#eef3ff;
+padding:15px;
 border-radius:8px;
 }
 </style>
@@ -52,45 +53,35 @@ border-radius:8px;
 
 <h2>Garments AI Doctor</h2>
 
-<label>Patient Name</label>
-<input id="name">
+<input id="name" placeholder="Patient Name">
+<input id="emp" placeholder="Employee ID">
+<input id="age" type="number" placeholder="Age">
 
-<label>Employee ID</label>
-<input id="empid">
-
-<label>Age</label>
-<input id="age" type="number">
-
-<label>Gender</label>
 <select id="gender">
 <option>Male</option>
 <option>Female</option>
 </select>
 
-<label>Height (cm)</label>
-<input id="height" type="number">
+<input id="height" type="number" placeholder="Height cm">
+<input id="weight" type="number" placeholder="Weight kg">
 
-<label>Weight (kg)</label>
-<input id="weight" type="number">
-
-<label>Work Type</label>
 <select id="work">
 <option value="sitting">Sewing Operator</option>
 <option value="lifting">Loading Worker</option>
 <option value="standing">Standing Worker</option>
 </select>
 
-<label>Symptom</label>
 <select id="symptom">
 <option>Back Pain</option>
 <option>Neck Pain</option>
 <option>Eye Strain</option>
-<option>Fatigue</option>
 <option>Knee Pain</option>
-<option>Shoulder Pain</option>
+<option>Fatigue</option>
 </select>
 
 <button onclick="runDoctor()">Run AI Doctor</button>
+<button onclick="saveReport()">Save Report</button>
+<button onclick="exportPDF()">Export PDF</button>
 
 <div id="result" class="result"></div>
 
@@ -98,8 +89,10 @@ border-radius:8px;
 
 <script>
 
-function bmi(weight,height){
-return (weight/((height/100)*(height/100))).toFixed(1)
+let reportText=""
+
+function bmi(w,h){
+return (w/((h/100)*(h/100))).toFixed(1)
 }
 
 function risk(age,bmi,work){
@@ -108,6 +101,7 @@ let score=0
 
 if(age>40) score+=15
 if(bmi>25) score+=15
+if(bmi>30) score+=25
 if(work=="sitting") score+=15
 if(work=="lifting") score+=20
 
@@ -123,92 +117,133 @@ if(score<=75) return "HIGH"
 return "SEVERE"
 }
 
-function runDoctor(){
-
-let name=document.getElementById("name").value
-let emp=document.getElementById("empid").value
-let age=parseInt(document.getElementById("age").value)
-let gender=document.getElementById("gender").value
-let height=parseFloat(document.getElementById("height").value)
-let weight=parseFloat(document.getElementById("weight").value)
-let work=document.getElementById("work").value
-let symptom=document.getElementById("symptom").value
-
-let b=bmi(weight,height)
-let score=risk(age,b,work)
-let rlevel=level(score)
-
-let medicine=""
-let exercise=""
-let food=""
-let doctor=""
+function harvardLogic(symptom){
 
 if(symptom=="Back Pain"){
-
-medicine="Paracetamol, Ibuprofen"
-exercise="Back stretch, Walking"
-food="Milk, Egg, Spinach"
-doctor="Orthopedic"
+return {
+medicine:"Paracetamol, Ibuprofen, Heat therapy",
+exercise:"Back stretch, walking, posture correction",
+food:"Milk, Egg, Spinach, Banana",
+doctor:"Orthopedic / Physiotherapy"
+}
 }
 
 if(symptom=="Neck Pain"){
-
-medicine="Paracetamol"
-exercise="Neck stretch"
-food="Banana, Nuts"
-doctor="Physiotherapy"
+return {
+medicine:"Paracetamol, muscle relaxant",
+exercise:"Neck stretch, shoulder roll",
+food:"Nuts, Fish, Banana",
+doctor:"Physiotherapy"
+}
 }
 
 if(symptom=="Eye Strain"){
-
-medicine="Eye drop (doctor)"
-exercise="20-20-20 rule"
-food="Carrot, Fish"
-doctor="Eye Specialist"
+return {
+medicine:"Artificial tears",
+exercise:"20-20-20 rule",
+food:"Carrot, Fish, Vitamin A",
+doctor:"Eye specialist"
 }
+}
+
+if(symptom=="Knee Pain"){
+return {
+medicine:"Ibuprofen",
+exercise:"Knee stretch, walking",
+food:"Calcium food, milk",
+doctor:"Orthopedic"
+}
+}
+
+if(symptom=="Fatigue"){
+return {
+medicine:"Rest, hydration",
+exercise:"Light walking",
+food:"Banana, egg, water",
+doctor:"General physician"
+}
+}
+
+}
+
+function runDoctor(){
+
+let name=nameEl.value
+let emp=empEl.value
+let age=parseInt(ageEl.value)
+let gender=genderEl.value
+let h=parseFloat(heightEl.value)
+let w=parseFloat(weightEl.value)
+let work=workEl.value
+let symptom=symptomEl.value
+
+let b=bmi(w,h)
+let score=risk(age,b,work)
+let rlevel=level(score)
+
+let logic=harvardLogic(symptom)
 
 let today=new Date().toLocaleDateString()
 
-document.getElementById("result").innerHTML=
-
+reportText=
 `
-<h3>AI Doctor Report</h3>
+Garments AI Doctor Report
 
-Date: ${today} <br>
-Patient: ${name} <br>
-Employee ID: ${emp} <br>
-Age: ${age} <br>
-Gender: ${gender} <br>
-BMI: ${b} <br>
+Date: ${today}
+Patient: ${name}
+Employee: ${emp}
+Age: ${age}
+Gender: ${gender}
+BMI: ${b}
 
-<hr>
+Symptom: ${symptom}
+Risk Score: ${score}
+Risk Level: ${rlevel}
 
-Symptom: <b>${symptom}</b><br>
-Risk Score: <b>${score}</b><br>
-Risk Level: <b>${rlevel}</b><br>
+Medicine:
+${logic.medicine}
 
-<hr>
+Exercise:
+${logic.exercise}
 
-<b>Medicine</b><br>
-${medicine}
+Food:
+${logic.food}
 
-<br><br>
-
-<b>Exercise</b><br>
-${exercise}
-
-<br><br>
-
-<b>Food Habit</b><br>
-${food}
-
-<br><br>
-
-<b>Recommended Doctor</b><br>
-${doctor}
+Doctor:
+${logic.doctor}
 `
+
+document.getElementById("result").innerHTML=reportText.replace(/\n/g,"<br>")
 
 }
+
+function saveReport(){
+
+let reports=localStorage.getItem("reports") || ""
+reports+= "\n------------------\n"+reportText
+localStorage.setItem("reports",reports)
+
+alert("Report Saved")
+}
+
+function exportPDF(){
+
+const { jsPDF } = window.jspdf;
+const doc = new jsPDF();
+
+doc.text(reportText,10,10)
+doc.save("AI_Doctor_Report.pdf")
+
+}
+
+const nameEl=document.getElementById("name")
+const empEl=document.getElementById("emp")
+const ageEl=document.getElementById("age")
+const genderEl=document.getElementById("gender")
+const heightEl=document.getElementById("height")
+const weightEl=document.getElementById("weight")
+const workEl=document.getElementById("work")
+const symptomEl=document.getElementById("symptom")
 
 </script>
 
