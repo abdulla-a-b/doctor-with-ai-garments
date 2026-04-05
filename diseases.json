@@ -1,1 +1,22 @@
-
+[
+{"id":1,"name":"Back Pain","category":"Musculoskeletal"},
+{"id":2,"name":"Neck Pain","category":"Musculoskeletal"},
+{"id":3,"name":"Shoulder Pain","category":"Musculoskeletal"},
+{"id":4,"name":"Knee Pain","category":"Musculoskeletal"},
+{"id":5,"name":"Heel Pain","category":"Musculoskeletal"},
+{"id":6,"name":"Eye Strain","category":"Vision"},
+{"id":7,"name":"Headache","category":"Neurological"},
+{"id":8,"name":"Fatigue","category":"General"},
+{"id":9,"name":"Gastric","category":"Digestive"},
+{"id":10,"name":"Acidity","category":"Digestive"},
+{"id":11,"name":"Common Cold","category":"Respiratory"},
+{"id":12,"name":"Cough","category":"Respiratory"},
+{"id":13,"name":"Fever","category":"General"},
+{"id":14,"name":"Anemia","category":"Blood"},
+{"id":15,"name":"Dehydration","category":"General"},
+{"id":16,"name":"Varicose Vein","category":"Circulation"},
+{"id":17,"name":"Wrist Pain","category":"Musculoskeletal"},
+{"id":18,"name":"Finger Pain","category":"Musculoskeletal"},
+{"id":19,"name":"Skin Allergy","category":"Dermatology"},
+{"id":20,"name":"Stress","category":"Mental"}
+]
