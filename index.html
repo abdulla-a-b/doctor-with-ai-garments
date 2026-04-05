@@ -4,15 +4,46 @@
 <title>Garments AI Doctor</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-body{font-family:Arial;background:#f4f6fb;padding:20px}
-.container{max-width:800px;margin:auto;background:white;padding:20px;border-radius:10px}
-input,select{width:100%;padding:10px;margin:5px 0}
-button{padding:10px;background:#0066ff;color:white;border:none;margin:5px}
-.result{background:#eef3ff;padding:15px;margin-top:10px}
+body{
+font-family:Arial;
+background:#f4f6fb;
+padding:20px;
+}
+
+.container{
+max-width:750px;
+margin:auto;
+background:white;
+padding:20px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+input,select{
+width:100%;
+padding:10px;
+margin:5px 0;
+}
+
+button{
+background:#0066ff;
+color:white;
+padding:10px;
+border:none;
+border-radius:5px;
+margin-top:5px;
+cursor:pointer;
+}
+
+.result{
+margin-top:20px;
+background:#eef3ff;
+padding:15px;
+border-radius:8px;
+}
 </style>
 </head>
 
@@ -31,161 +62,187 @@ button{padding:10px;background:#0066ff;color:white;border:none;margin:5px}
 <option>Female</option>
 </select>
 
-<input id="height" placeholder="Height cm">
-<input id="weight" placeholder="Weight kg">
+<input id="height" type="number" placeholder="Height cm">
+<input id="weight" type="number" placeholder="Weight kg">
+
+<select id="work">
+<option value="sitting">Sewing Operator</option>
+<option value="lifting">Loading Worker</option>
+<option value="standing">Standing Worker</option>
+</select>
 
 <select id="symptom">
 <option>Back Pain</option>
 <option>Neck Pain</option>
-<option>Shoulder Pain</option>
-<option>Knee Pain</option>
-<option>Heel Pain</option>
 <option>Eye Strain</option>
-<option>Headache</option>
+<option>Knee Pain</option>
 <option>Fatigue</option>
-<option>Gastric</option>
-<option>Acidity</option>
-<option>Cold</option>
-<option>Cough</option>
-<option>Fever</option>
-<option>Anemia</option>
-<option>Dehydration</option>
-<option>Varicose Vein</option>
-<option>Wrist Pain</option>
-<option>Finger Pain</option>
-<option>Skin Allergy</option>
-<option>Stress</option>
 </select>
 
 <button onclick="runDoctor()">Run AI Doctor</button>
-<button onclick="saveReport()">Save</button>
-<button onclick="exportPDF()">PDF</button>
-<button onclick="printReport()">Print</button>
-<a href="dashboard.html"><button>Dashboard</button></a>
+<button onclick="saveReport()">Save Report</button>
+<button onclick="exportPDF()">Export PDF</button>
 
 <div id="result" class="result"></div>
-
-<canvas id="riskChart"></canvas>
 
 </div>
 
 <script>
 
-let report=""
-let riskScore=0
+let reportText=""
 
 function bmi(w,h){
 return (w/((h/100)*(h/100))).toFixed(1)
 }
 
-const medicineDB={
-"Back Pain":"Ibuprofen, Paracetamol",
-"Neck Pain":"Paracetamol",
-"Knee Pain":"Ibuprofen",
-"Fatigue":"Hydration, Vitamin",
-"Eye Strain":"Artificial tear"
+function risk(age,bmi,work){
+
+let score=0
+
+if(age>40) score+=15
+if(bmi>25) score+=15
+if(bmi>30) score+=25
+if(work=="sitting") score+=15
+if(work=="lifting") score+=20
+
+return score
 }
 
-const doctorDB={
-"Back Pain":"Orthopedic",
-"Eye Strain":"Eye Specialist",
-"Fatigue":"General Physician"
+function level(score){
+
+if(score<=25) return "LOW"
+if(score<=50) return "MODERATE"
+if(score<=75) return "HIGH"
+
+return "SEVERE"
+}
+
+function harvardLogic(symptom){
+
+if(symptom=="Back Pain"){
+return {
+medicine:"Paracetamol, Ibuprofen, Heat therapy",
+exercise:"Back stretch, walking, posture correction",
+food:"Milk, Egg, Spinach, Banana",
+doctor:"Orthopedic / Physiotherapy"
+}
+}
+
+if(symptom=="Neck Pain"){
+return {
+medicine:"Paracetamol, muscle relaxant",
+exercise:"Neck stretch, shoulder roll",
+food:"Nuts, Fish, Banana",
+doctor:"Physiotherapy"
+}
+}
+
+if(symptom=="Eye Strain"){
+return {
+medicine:"Artificial tears",
+exercise:"20-20-20 rule",
+food:"Carrot, Fish, Vitamin A",
+doctor:"Eye specialist"
+}
+}
+
+if(symptom=="Knee Pain"){
+return {
+medicine:"Ibuprofen",
+exercise:"Knee stretch, walking",
+food:"Calcium food, milk",
+doctor:"Orthopedic"
+}
+}
+
+if(symptom=="Fatigue"){
+return {
+medicine:"Rest, hydration",
+exercise:"Light walking",
+food:"Banana, egg, water",
+doctor:"General physician"
+}
+}
+
 }
 
 function runDoctor(){
 
 let name=nameEl.value
 let emp=empEl.value
-let age=ageEl.value
-let h=heightEl.value
-let w=weightEl.value
+let age=parseInt(ageEl.value)
+let gender=genderEl.value
+let h=parseFloat(heightEl.value)
+let w=parseFloat(weightEl.value)
+let work=workEl.value
 let symptom=symptomEl.value
 
 let b=bmi(w,h)
+let score=risk(age,b,work)
+let rlevel=level(score)
 
-riskScore=0
-if(age>40) riskScore+=15
-if(b>25) riskScore+=15
+let logic=harvardLogic(symptom)
 
 let today=new Date().toLocaleDateString()
 
-report=`
+reportText=
+`
+Garments AI Doctor Report
+
 Date: ${today}
-Name: ${name}
-ID: ${emp}
-Symptom: ${symptom}
+Patient: ${name}
+Employee: ${emp}
+Age: ${age}
+Gender: ${gender}
 BMI: ${b}
-Risk: ${riskScore}
+
+Symptom: ${symptom}
+Risk Score: ${score}
+Risk Level: ${rlevel}
 
 Medicine:
-${medicineDB[symptom]}
+${logic.medicine}
+
+Exercise:
+${logic.exercise}
+
+Food:
+${logic.food}
 
 Doctor:
-${doctorDB[symptom]}
+${logic.doctor}
 `
 
-result.innerHTML=report.replace(/\n/g,"<br>")
-
-drawChart(riskScore)
-
-saveHistory()
-
-}
-
-function drawChart(score){
-
-new Chart(document.getElementById("riskChart"),{
-type:"bar",
-data:{
-labels:["Risk"],
-datasets:[{label:"Risk Score",data:[score]}]
-}
-})
-
-}
-
-function saveHistory(){
-
-let data=JSON.parse(localStorage.getItem("patients")||"[]")
-
-data.push({
-date:new Date(),
-report:report,
-risk:riskScore
-})
-
-localStorage.setItem("patients",JSON.stringify(data))
+document.getElementById("result").innerHTML=reportText.replace(/\n/g,"<br>")
 
 }
 
 function saveReport(){
-saveHistory()
-alert("Saved")
+
+let reports=localStorage.getItem("reports") || ""
+reports+= "\n------------------\n"+reportText
+localStorage.setItem("reports",reports)
+
+alert("Report Saved")
 }
 
 function exportPDF(){
 
 const { jsPDF } = window.jspdf;
-const doc=new jsPDF()
+const doc = new jsPDF();
 
-doc.text(report,10,10)
-doc.save("AI_Doctor.pdf")
-
-}
-
-function printReport(){
-
-let w=window.open()
-w.document.write(report.replace(/\n/g,"<br>"))
-w.print()
+doc.text(reportText,10,10)
+doc.save("AI_Doctor_Report.pdf")
 
 }
 
 const nameEl=document.getElementById("name")
 const empEl=document.getElementById("emp")
 const ageEl=document.getElementById("age")
+const genderEl=document.getElementById("gender")
 const heightEl=document.getElementById("height")
 const weightEl=document.getElementById("weight")
+const workEl=document.getElementById("work")
 const symptomEl=document.getElementById("symptom")
 
 </script>
