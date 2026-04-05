@@ -1,1 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Garments AI Doctor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
+<style>
+body{
+font-family:Arial;
+background:#f4f6fb;
+padding:20px;
+}
+
+.container{
+max-width:700px;
+margin:auto;
+background:white;
+padding:20px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+input,select{
+width:100%;
+padding:10px;
+margin:5px 0;
+border:1px solid #ccc;
+border-radius:5px;
+}
+
+button{
+background:#0066ff;
+color:white;
+padding:12px;
+border:none;
+border-radius:5px;
+cursor:pointer;
+}
+
+.result{
+margin-top:20px;
+padding:15px;
+background:#eef3ff;
+border-radius:8px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Garments AI Doctor</h2>
+
+<label>Patient Name</label>
+<input id="name">
+
+<label>Employee ID</label>
+<input id="empid">
+
+<label>Age</label>
+<input id="age" type="number">
+
+<label>Gender</label>
+<select id="gender">
+<option>Male</option>
+<option>Female</option>
+</select>
+
+<label>Height (cm)</label>
+<input id="height" type="number">
+
+<label>Weight (kg)</label>
+<input id="weight" type="number">
+
+<label>Work Type</label>
+<select id="work">
+<option value="sitting">Sewing Operator</option>
+<option value="lifting">Loading Worker</option>
+<option value="standing">Standing Worker</option>
+</select>
+
+<label>Symptom</label>
+<select id="symptom">
+<option>Back Pain</option>
+<option>Neck Pain</option>
+<option>Eye Strain</option>
+<option>Fatigue</option>
+<option>Knee Pain</option>
+<option>Shoulder Pain</option>
+</select>
+
+<button onclick="runDoctor()">Run AI Doctor</button>
+
+<div id="result" class="result"></div>
+
+</div>
+
+<script>
+
+function bmi(weight,height){
+return (weight/((height/100)*(height/100))).toFixed(1)
+}
+
+function risk(age,bmi,work){
+
+let score=0
+
+if(age>40) score+=15
+if(bmi>25) score+=15
+if(work=="sitting") score+=15
+if(work=="lifting") score+=20
+
+return score
+}
+
+function level(score){
+
+if(score<=25) return "LOW"
+if(score<=50) return "MODERATE"
+if(score<=75) return "HIGH"
+
+return "SEVERE"
+}
+
+function runDoctor(){
+
+let name=document.getElementById("name").value
+let emp=document.getElementById("empid").value
+let age=parseInt(document.getElementById("age").value)
+let gender=document.getElementById("gender").value
+let height=parseFloat(document.getElementById("height").value)
+let weight=parseFloat(document.getElementById("weight").value)
+let work=document.getElementById("work").value
+let symptom=document.getElementById("symptom").value
+
+let b=bmi(weight,height)
+let score=risk(age,b,work)
+let rlevel=level(score)
+
+let medicine=""
+let exercise=""
+let food=""
+let doctor=""
+
+if(symptom=="Back Pain"){
+
+medicine="Paracetamol, Ibuprofen"
+exercise="Back stretch, Walking"
+food="Milk, Egg, Spinach"
+doctor="Orthopedic"
+}
+
+if(symptom=="Neck Pain"){
+
+medicine="Paracetamol"
+exercise="Neck stretch"
+food="Banana, Nuts"
+doctor="Physiotherapy"
+}
+
+if(symptom=="Eye Strain"){
+
+medicine="Eye drop (doctor)"
+exercise="20-20-20 rule"
+food="Carrot, Fish"
+doctor="Eye Specialist"
+}
+
+let today=new Date().toLocaleDateString()
+
+document.getElementById("result").innerHTML=
+
+`
+<h3>AI Doctor Report</h3>
+
+Date: ${today} <br>
+Patient: ${name} <br>
+Employee ID: ${emp} <br>
+Age: ${age} <br>
+Gender: ${gender} <br>
+BMI: ${b} <br>
+
+<hr>
+
+Symptom: <b>${symptom}</b><br>
+Risk Score: <b>${score}</b><br>
+Risk Level: <b>${rlevel}</b><br>
+
+<hr>
+
+<b>Medicine</b><br>
+${medicine}
+
+<br><br>
+
+<b>Exercise</b><br>
+${exercise}
+
+<br><br>
+
+<b>Food Habit</b><br>
+${food}
+
+<br><br>
+
+<b>Recommended Doctor</b><br>
+${doctor}
+`
+
+}
+
+</script>
+
+</body>
+</html>
